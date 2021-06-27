@@ -10,12 +10,17 @@ add_subdirectory(modules/RTNeural)
 add_subdirectory(modules)
 include_directories(modules)
 
+if(IOS)
+    set(JUCE_FORMATS Standalone AUv3)
+else()
+    set(JUCE_FORMATS AU VST3 Standalone LV2)
+endif()
 
 juce_add_plugin(NeuralPi
     COMPANY_NAME GuitarML
     PLUGIN_MANUFACTURER_CODE GtML
     PLUGIN_CODE Npi3 
-    FORMATS AU VST3 Standalone LV2
+    FORMATS ${JUCE_FORMATS}
     ProductName "NeuralPi"
     LV2_URI https://github.com/GuitarML/NeuralPi
     ICON_BIG resources/logo.png
@@ -49,4 +54,26 @@ if(MACOS_RELEASE)
     message(STATUS "Setting MacOS release flags...")
     set_target_properties(NeuralPi_Standalone PROPERTIES
         XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME YES)
+endif()
+
+if(IOS)
+    message(STATUS "Setting iOS-specific properties...")
+
+    foreach(target IN ITEMS BinaryData RTNeural juce_plugin_modules NeuralPi NeuralPi_Standalone NeuralPi_AUv3)
+        set_target_properties(${target}
+            PROPERTIES
+                RUNTIME_OUTPUT_DIRECTORY "./"
+                ARCHIVE_OUTPUT_DIRECTORY "./"
+                LIBRARY_OUTPUT_DIRECTORY "./")
+    endforeach()
+
+    set_target_properties(NeuralPi_Standalone PROPERTIES
+            XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)"
+            XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
+            XCODE_ATTRIBUTE_ENABLE_IN_APP_PURCHASE "YES")
+
+    set_target_properties(NeuralPi_AUv3 PROPERTIES
+            XCODE_ATTRIBUTE_INSTALL_PATH "$(LOCAL_APPS_DIR)/NeuralPi.app/PlugIns"
+            XCODE_ATTRIBUTE_SKIP_INSTALL "NO"
+            XCODE_ATTRIBUTE_ENABLE_IN_APP_PURCHASE "YES")
 endif()
